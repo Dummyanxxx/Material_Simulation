@@ -1,26 +1,3 @@
-#!/bin/bash
-#SBATCH --job-name=ecut 	                 # Job name (sesuaikan sesuai kebutuhan)
-#SBATCH --partition=short                    # Pilih partisi: short | medium-small | medium-large | long | very-long
-#SBATCH --ntasks=64                          # Jumlah total proses MPI
-#SBATCH --nodes=1                            # Maksimum jumlah node yang digunakan
-#SBATCH --ntasks-per-node=64                 # Jumlah proses per node
-#SBATCH --mem=64G                            # Memori per node
-#SBATCH --time=01-00:00                      # Waktu maksimum eksekusi (hh:mm:ss)
-#SBATCH --output=ecut.log                	 # Log output dan error (berdasarkan Job ID)
-
-# Informasi dasar tentang job
-echo "Date              = $(date)"
-echo "Hostname          = $(hostname -s)"
-echo "Working Directory = $(pwd)"
-echo ""
-echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
-echo "Number of Tasks Allocated      = $SLURM_NTASKS"
-echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
-
-# Load module MPI dan Quantum ESPRESSO
-module load openmpi4/4.1.4
-module load materials/qe/7.2-openmpi 
-
 # Convergence test of cut-off energy.
 # Set a variable ecut from 40 to 150 Ry.
 for ecut in 40 50 60 70 80 90 100 \
@@ -115,11 +92,9 @@ O       5.703054   5.703054   2.854089
 
 EOF
 # Menjalankan perhitungan SCF Quantum ESPRESSO
-mpirun -np $SLURM_NTASKS pw.x < /mgpfs/home/yfadhilah/bulk/b1/ecut/ecut.$ecut.in > /mgpfs/home/yfadhilah/bulk/b1/ecut/ecut.$ecut.out
+mpirun -np 4 pw.x < /mgpfs/home/yfadhilah/bulk/b1/ecut/ecut.$ecut.in > /mgpfs/home/yfadhilah/bulk/b1/ecut/ecut.$ecut.out
 
 # Write cut-off and total energies in calc-ecut.dat.
 awk '/!/ {printf"%d %s\n",'$ecut',$5}' ecut.$ecut.out >> calc-ecut.dat
 # End of for loop
 done
-
-echo "Finish            = $(date)"
